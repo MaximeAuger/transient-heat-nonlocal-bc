@@ -34,3 +34,6 @@ results/cache/
 
 # Logs
 *.log
+
+# Smoke-test outputs of run_all.py --quick
+results/quick/

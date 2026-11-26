@@ -81,7 +81,7 @@ $$r = \partial_t u_\theta - \partial_x\bigl(k(u_\theta)\thinspace \partial_x u_\
 
 Multiplying by a product test function $v_i(x)\thinspace w_j(t)$ and integrating by parts **in $x$ only** ($v_i(1) = 0$):
 
-$$R_{ij} = \int_0^T\!\!\int_0^1 \bigl(\partial_t u_\theta\thinspace  v_i + k(u_\theta)\thinspace \partial_x u_\theta\thinspace  v_i'\bigr)\thinspace  w_j \thinspace dx\thinspace dt \ -\  v_i(0) \int_0^T \lambda(t)\thinspace  w_j(t)\thinspace dt \ -\  \int_0^T\!\!\int_0^1 f\thinspace  v_i\thinspace  w_j \thinspace dx\thinspace dt$$
+$$R_{ij} = \int_0^T\int_0^1 \bigl(\partial_t u_\theta\thinspace  v_i + k(u_\theta)\thinspace \partial_x u_\theta\thinspace  v_i'\bigr)\thinspace  w_j \thinspace dx\thinspace dt \ -\  v_i(0) \int_0^T \lambda(t)\thinspace  w_j(t)\thinspace dt \ -\  \int_0^T\int_0^1 f\thinspace  v_i\thinspace  w_j \thinspace dx\thinspace dt$$
 
 - **Test functions:** $v_i(x) = P_i(2x-1) - 1$ (Legendre, $i = 1..K_x$) and $w_j(t) = P_j(2t/T - 1)$ (Legendre, $j = 0..K_t - 1$); default $K_x \times K_t = 12 \times 8$.
 - **Boundary flux as a Lagrange multiplier, now a function of time:** $\lambda(t) = -k(u)\thinspace u_x(0,t) = \sum_m c_m P_m(2t/T - 1)$ with trainable $c_m$ ($K_t$ modes).

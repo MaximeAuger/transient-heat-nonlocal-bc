@@ -38,6 +38,7 @@ COMMON_CONFIG = {
     "alpha": 1.0,          # nonlocal coefficient
     "beta": 0.0,           # nonlinearity strength, k(u) = 1 + beta u^2
     "T": 1.0,              # final time
+    "gamma": 0.0,          # nonlocal initial condition u(x,0) = gamma u(x,T) + phi
     "n_hidden": 32,
     "n_layers": 4,
     "n_x": 32,             # Gauss-Legendre points in space

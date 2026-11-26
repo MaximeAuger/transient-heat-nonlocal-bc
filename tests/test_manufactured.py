@@ -67,3 +67,13 @@ def test_source_free_initial_state_is_compatible(alpha):
 def test_source_free_is_singular_at_critical_alpha():
     with pytest.raises(ValueError):
         source_free(2.0)
+
+
+@pytest.mark.parametrize("gamma", [-1.0, 0.5, 2.0])
+def test_nonlocal_initial_data(gamma):
+    """phi = u(x, 0) - gamma u(x, T) for the Sapagovas-type condition (E5)."""
+    prob = manufactured("decay", gamma=gamma)
+    x = np.linspace(0.0, 1.0, 21)
+    expected = prob.u(x, np.zeros_like(x)) - gamma * prob.u(x, np.full_like(x, prob.T))
+    assert np.allclose(prob.ic_phi(x), expected, atol=1e-14)
+    assert verify(prob, verbose=False)["ok"]      # PDE data are unchanged

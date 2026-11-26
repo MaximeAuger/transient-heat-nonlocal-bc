@@ -12,6 +12,16 @@ which gives u_theta(x, 0) = u0(x) and u_theta(1, t) = g1(t) (compatible data,
 u0(1) = g1(0)).  The left boundary x = 0 is left free: it carries the
 nonlocal integral condition, which is the object of the comparison.
 
+Nonlocal initial condition (experiment E5).  For
+u(x, 0) = gamma u(x, T) + phi(x), gamma != 1, write u = A(x) + G(t) + B(x, t)
+with G(t) = g1(t) - g1(0) and B = (t / T)(1 - x) N_theta, both vanishing at
+t = 0.  The condition A = gamma [A + G(T) + B(x, T)] + phi is solved for A:
+
+    A(x) = [ phi(x) + gamma ( G(T) + B(x, T) ) ] / (1 - gamma),
+
+so the nonlocal initial condition is also satisfied exactly, at the price of
+one extra network evaluation at t = T.
+
 References
 ----------
     - Raissi, M., Perdikaris, P. & Karniadakis, G.E. (2019). Physics-informed
@@ -88,7 +98,22 @@ class HardConstrainedNet(nn.Module):
 
     def forward(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         """Evaluate u_theta at points x, t of shape (N, 1)."""
+        if self.problem.gamma != 0.0:
+            return self._forward_nonlocal_initial(x, t)
         z = torch.cat([2.0 * x - 1.0, 2.0 * t / self.T - 1.0], dim=1)
         lift = (self.problem.u0_torch(x)
                 + self.problem.g1_torch(t) - self.problem.g1_at_0)
         return lift + (t / self.T) * (1.0 - x) * self.mlp(z)
+
+    def _forward_nonlocal_initial(self, x, t):
+        """Ansatz for u(x, 0) = gamma u(x, T) + phi(x), gamma != 1."""
+        p, gamma = self.problem, self.problem.gamma
+        if gamma == 1.0:
+            raise ValueError("the hard-constraint ansatz requires gamma != 1")
+        xi = 2.0 * x - 1.0
+        b = (t / self.T) * (1.0 - x) * self.mlp(
+            torch.cat([xi, 2.0 * t / self.T - 1.0], dim=1))
+        b_T = (1.0 - x) * self.mlp(torch.cat([xi, torch.ones_like(x)], dim=1))
+        g_T = p.g1_at_T - p.g1_at_0
+        a = (p.ic_phi_torch(x) + gamma * (g_T + b_T)) / (1.0 - gamma)
+        return a + p.g1_torch(t) - p.g1_at_0 + b

@@ -9,6 +9,7 @@ E2. Nonlinearity  beta in {0.5, 1, 2, 3, 5}
 E3. Nonlocal coefficient alpha in {0.5, 1, 1.5, 1.9, 1.99, 2.5, 3}
     (alpha* = 2 is the critical value) + source-free problem vs FD reference
 E4. Ablations: test space K_x x K_t, horizon T, quadrature points, network
+E5. Extension: nonlocal initial condition u(x,0) = gamma u(x,T) + phi(x)
 
 Every configuration is run with 3 seeds; tables report mean +/- std.
 
@@ -48,6 +49,7 @@ ALPHAS_FREE = (1.0, 2.5, 3.0)                 # source-free problem (FD ref.)
 TEST_SPACES = ((4, 4), (8, 6), (12, 8), (16, 12), (24, 16))
 QUAD_POINTS = (16, 24, 32, 48)
 NETWORKS = ((16, 4), (32, 2), (32, 4), (32, 6), (64, 4))   # (width, depth)
+GAMMAS = (-1.0, 0.5, 2.0)                     # nonlocal initial condition
 FD_TABLE_GRID = 200          # FD grid shown next to the networks in tables
 FD_REFERENCE_GRID = 1600     # FD grid used as reference (source-free cases)
 
@@ -69,8 +71,10 @@ def full_config(method, cfg):
 
 
 def job_id(method, cfg):
-    blob = json.dumps({"method": method, "cfg": full_config(method, cfg)},
-                      sort_keys=True)
+    full = full_config(method, cfg)
+    if full["gamma"] == 0.0:       # keeps the keys of the local-IC runs stable
+        del full["gamma"]
+    blob = json.dumps({"method": method, "cfg": full}, sort_keys=True)
     return hashlib.sha1(blob.encode()).hexdigest()[:16]
 
 
@@ -126,6 +130,11 @@ def build_jobs(only, quick):
         add("E4_quad", n, n_x=n, n_t=n)
     for width, depth in NETWORKS:
         add("E4_net", f"{width}x{depth}", n_hidden=width, n_layers=depth)
+
+    # --- E5: nonlocal initial condition (Sapagovas type) ---
+    add("E5", 0.0, problem="decay")
+    for gamma in GAMMAS:
+        add("E5", gamma, problem="decay", gamma=gamma)
     return jobs
 
 
@@ -438,6 +447,23 @@ def write_tables(res, out_dir, meta):
     two_method_table("E4_quad", "E4c — quadrature / collocation points "
                      "n_x = n_t", "Points per direction")
     two_method_table("E4_net", "E4d — network size (width × depth)", "Network")
+
+    if res.labels("E5"):
+        L.append("\n## E5 — nonlocal initial condition "
+                 "u(x,0) = γ u(x,T) + φ(x) (β = 0, α = 1, `decay`)\n")
+        L.append("| γ | PINN L2 | VPINN L2 | lower mean | PINN H1(T) | "
+                 "VPINN H1(T) | PINN flux (AD) | VPINN flux λ(t) |")
+        L.append("|---|---|---|---|---|---|---|---|")
+        for gamma in res.labels("E5"):
+            name, ratio, overlap = winner(res, "E5", gamma)
+            tag = f"{name} ×{ratio:.1f}" + (" (within ±1 std)" if overlap else "")
+            lab = f"{gamma:g}" + (" (local IC)" if gamma == 0.0 else "")
+            L.append(f"| {lab} | {cell(res, 'E5', gamma, 'pinn', 'L2')} | "
+                     f"{cell(res, 'E5', gamma, 'vpinn', 'L2')} | {tag} | "
+                     f"{cell(res, 'E5', gamma, 'pinn', 'H1_T')} | "
+                     f"{cell(res, 'E5', gamma, 'vpinn', 'H1_T')} | "
+                     f"{cell(res, 'E5', gamma, 'pinn', 'flux_ad_rel')} | "
+                     f"{cell(res, 'E5', gamma, 'vpinn', 'flux_lam_rel')} |")
 
     failed = [(k, res.n_failed(*k)) for k in res.groups if res.n_failed(*k)]
     L.append("\n## Optimiser failures\n")
@@ -802,7 +828,7 @@ def main():
     ap.add_argument("--quick", action="store_true",
                     help="tiny budget and a single seed (smoke test)")
     ap.add_argument("--only", default="",
-                    help="comma-separated subset of E1,E2,E3,E4")
+                    help="comma-separated subset of E1,E2,E3,E4,E5")
     ap.add_argument("--workers", type=int,
                     default=max(1, min(8, (os.cpu_count() or 2) - 1)))
     ap.add_argument("--force", action="store_true",

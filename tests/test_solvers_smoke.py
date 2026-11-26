@@ -53,3 +53,25 @@ def test_source_free_problem_against_fd_reference():
     ref = solve_crank_nicolson(source_free(1.0), 200, 200)
     res = train_pinn(cfg, verbose=False, reference=ref)
     assert res["errors"]["L2_rel"] < 5e-2
+
+
+@pytest.mark.parametrize("gamma", [-1.0, 0.5, 2.0])
+def test_nonlocal_initial_condition_is_exact(gamma):
+    """E5 ansatz: u(x, 0) = gamma u(x, T) + phi(x) holds for any weights."""
+    prob = manufactured("oscillating", alpha=1.5, gamma=gamma)
+    torch.manual_seed(1)
+    model = HardConstrainedNet(prob).to(DTYPE)
+    s = torch.linspace(0, 1, 11, dtype=DTYPE).reshape(-1, 1)
+    u_0 = model(s, torch.zeros_like(s)).detach().numpy().ravel()
+    u_T = model(s, torch.full_like(s, prob.T)).detach().numpy().ravel()
+    assert np.allclose(u_0, gamma * u_T + prob.ic_phi(s.numpy().ravel()),
+                       atol=1e-13)
+    u_right = model(torch.ones_like(s), s * prob.T).detach().numpy().ravel()
+    assert np.allclose(u_right, prob.g1(s.numpy().ravel() * prob.T), atol=1e-13)
+
+
+@pytest.mark.parametrize("train", [train_pinn, train_vpinn])
+def test_training_with_nonlocal_initial_condition(train):
+    res = train({**SMALL, "gamma": 0.5}, verbose=False)
+    assert res["errors"]["L2_rel"] < 2e-2
+    assert not res["lbfgs_failed"]

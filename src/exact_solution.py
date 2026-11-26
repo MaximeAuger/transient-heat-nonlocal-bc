@@ -27,6 +27,13 @@ for which phi(0) = int_0^1 phi dx = 4/pi, hence g0 = 0 when alpha = 1.
 A source-free problem without closed-form solution (f = 0, g0 = g1 = 0) is
 also provided; it is used with the finite-difference reference.
 
+Optional extension (experiment E5): the local initial condition can be
+replaced by a nonlocal one of Sapagovas type,
+
+    u(x, 0) = gamma * u(x, T) + phi(x),
+
+with phi derived from the manufactured solution (gamma = 0: usual problem).
+
 Author: Maxime Auger, Dept. of Applied Mechanics, FEMTO-ST Institute, ENSMM
 """
 
@@ -95,6 +102,10 @@ def _numpy_fn(args, expr):
 
 def _torch_fn(args, expr):
     """PyTorch callable (differentiable); constants are broadcast."""
+    # symbol-free calls such as exp(-1) are evaluated once, as floats
+    constants = [a for a in sp.sympify(expr).atoms(sp.Function)
+                 if not a.free_symbols]
+    expr = sp.sympify(expr).xreplace({c: sp.Float(c.evalf(20)) for c in constants})
     fn = sp.lambdify(args, expr, modules=[_TORCH_NAMESPACE])
 
     def wrapped(*vals):
@@ -129,12 +140,20 @@ class Problem:
                   ansatz) and u_torch(x,t) when available.
     """
 
-    def __init__(self, name, alpha, beta, T, f, g0, g1, u0, u=None):
+    def __init__(self, name, alpha, beta, T, f, g0, g1, u0, u=None,
+                 gamma=0.0, ic_phi=None):
         self.name = name
         self.alpha = float(alpha)
         self.beta = float(beta)
         self.T = float(T)
-        self.sym = {"f": f, "g0": g0, "g1": g1, "u0": u0, "u": u}
+        self.gamma = float(gamma)
+        self.sym = {"f": f, "g0": g0, "g1": g1, "u0": u0, "u": u,
+                    "ic_phi": ic_phi}
+        if self.gamma != 0.0:
+            # nonlocal initial condition u(x,0) = gamma u(x,T) + phi(x)
+            self.ic_phi = _numpy_fn((X,), ic_phi)
+            self.ic_phi_torch = _torch_fn((X,), ic_phi)
+            self.g1_at_T = float(sp.N(g1.subs(TT, _exact_rational(T))))
 
         self.f = _numpy_fn((X, TT), f)
         self.g0 = _numpy_fn((TT,), g0)
@@ -159,8 +178,9 @@ class Problem:
             self.u_torch = _torch_fn((X, TT), u)
 
     def __repr__(self):
+        extra = f", gamma={self.gamma:g}" if self.gamma != 0.0 else ""
         return (f"Problem({self.name}, alpha={self.alpha:g}, "
-                f"beta={self.beta:g}, T={self.T:g})")
+                f"beta={self.beta:g}, T={self.T:g}{extra})")
 
 
 # ---------------------------------------------------------------------------
@@ -177,13 +197,14 @@ def manufactured_expression(kind="decay"):
 
 
 def manufactured(kind="decay", alpha=ALPHA_DEFAULT, beta=BETA_DEFAULT,
-                 T=T_DEFAULT):
+                 T=T_DEFAULT, gamma=0.0):
     """Build a manufactured problem: data are derived from u by substitution.
 
-        f  = u_t - [k(u) u_x]_x
-        g0 = u(0, t) - alpha * int_0^1 u dx
-        g1 = u(1, t)
-        u0 = u(x, 0)
+        f   = u_t - [k(u) u_x]_x
+        g0  = u(0, t) - alpha * int_0^1 u dx
+        g1  = u(1, t)
+        u0  = u(x, 0)
+        phi = u(x, 0) - gamma * u(x, T)      (nonlocal initial condition)
     """
     u = manufactured_expression(kind)
     a, b = _exact_rational(alpha), _exact_rational(beta)
@@ -192,7 +213,9 @@ def manufactured(kind="decay", alpha=ALPHA_DEFAULT, beta=BETA_DEFAULT,
     g0 = sp.simplify(u.subs(X, 0) - a * sp.integrate(u, (X, 0, 1)))
     g1 = sp.simplify(u.subs(X, 1))
     u0 = u.subs(TT, 0)
-    return Problem(kind, alpha, beta, T, f, g0, g1, u0, u=u)
+    ic_phi = u0 - _exact_rational(gamma) * u.subs(TT, _exact_rational(T))
+    return Problem(kind, alpha, beta, T, f, g0, g1, u0, u=u,
+                   gamma=gamma, ic_phi=ic_phi)
 
 
 def source_free(alpha=ALPHA_DEFAULT, beta=BETA_DEFAULT, T=T_DEFAULT):
@@ -215,11 +238,13 @@ def source_free(alpha=ALPHA_DEFAULT, beta=BETA_DEFAULT, T=T_DEFAULT):
 
 
 def make_problem(kind="decay", alpha=ALPHA_DEFAULT, beta=BETA_DEFAULT,
-                 T=T_DEFAULT):
+                 T=T_DEFAULT, gamma=0.0):
     """Factory used by the solvers and by run_all.py."""
     if kind == "source_free":
+        if gamma != 0.0:
+            raise ValueError("source_free is defined for gamma = 0 only")
         return source_free(alpha, beta, T)
-    return manufactured(kind, alpha, beta, T)
+    return manufactured(kind, alpha, beta, T, gamma)
 
 
 # ---------------------------------------------------------------------------

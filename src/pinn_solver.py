@@ -96,7 +96,8 @@ def train_pinn(config=None, verbose=True, reference=None):
     torch.manual_seed(cfg["seed"])
     np.random.seed(cfg["seed"])
 
-    problem = make_problem(cfg["problem"], cfg["alpha"], cfg["beta"], cfg["T"])
+    problem = make_problem(cfg["problem"], cfg["alpha"], cfg["beta"], cfg["T"],
+                           cfg["gamma"])
     if verbose:
         print(f"[PINN] Starting training on {problem}")
 

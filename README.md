@@ -176,7 +176,7 @@ All numbers below are produced by `python src/run_all.py` and copied from [`resu
 
 - **No degradation when approaching $\alpha^{\ast} = 2$ from below:** the error at $\alpha = 1.99$ is the same as at $\alpha = 1.5$. A neutral mode is not an unstable one, and the horizon is finite.
 - **Above $\alpha^{\ast}$ the error jumps by one order of magnitude** for both methods, and the PINN becomes erratic (std larger than the mean at $\alpha = 2.5$). The VPINN has the lower mean, within one std.
-- The nonlocal condition itself stays satisfied to $4 \times 10^{-5}$–$10^{-4}$ on both sides of $\alpha^{\ast}$ (see `results/tables.md`): the constraint is met, the error is not small.
+- The nonlocal condition itself stays satisfied to between $4 \times 10^{-5}$ and $10^{-4}$ on both sides of $\alpha^{\ast}$ (see `results/tables.md`): the constraint is met, the error is not small.
 - At $\alpha = 3$ the time-marching scheme on a $200 \times 200$ grid is 10× *less* accurate than the networks (its truncation error is amplified by $e^{\sigma_1 T} \approx 760$). It remains second-order convergent, so a finer grid restores its advantage at a cost of seconds.
 
 **Source-free problem, error against the finite-difference reference (1600 × 1600)**
@@ -284,7 +284,7 @@ Both methods handle the two nonlocal conditions together at the accuracy of the 
 
 1. **Smooth monotone solution: a tie in accuracy, the VPINN is twice cheaper.** L2 errors of $3.0 \times 10^{-5}$ (PINN) and $3.5 \times 10^{-5}$ (VPINN) are within one standard deviation. The PINN is about 3× better in H1. At equal iteration budget the VPINN takes half the time.
 2. **Non-monotone time dynamics favour the PINN.** With the default time test space the VPINN is 25× worse; with enough time modes it is still 2–3× worse.
-3. **The time-dependent Lagrange multiplier works.** $\lambda(t)$ recovers the boundary flux to $10^{-4}$–$10^{-3}$ relative error, 2–4× better than differentiating the VPINN network, at no extra cost. It degrades when the time basis is too poor (3.6 % error on the source-free problem).
+3. **The time-dependent Lagrange multiplier works.** $\lambda(t)$ recovers the boundary flux to between $10^{-4}$ and $10^{-3}$ relative error, 2–4× better than differentiating the VPINN network, at no extra cost. It degrades when the time basis is too poor (3.6 % error on the source-free problem).
 4. **No crossover in $\beta$.** The VPINN/PINN crossover found near $\beta \approx 2.7$ in the 2D steady-state study does not appear in the transient 1D problem: the two methods are statistically indistinguishable for $\beta \in [0, 5]$, except for a modest VPINN advantage at $\beta = 2$.
 5. **$\alpha^{\ast} = 2$ is a sharp boundary for accuracy, but only from above.** Nothing happens when $\alpha \to 2^-$; for $\alpha \gt 2$ errors rise tenfold on the manufactured problem and, on the source-free problem, the VPINN fails at $\alpha = 2.5$ and both methods fail at $\alpha = 3$. Small residuals do not imply small errors in the growing-mode regime.
 6. **Neither network method is competitive with finite differences on this 1D problem** in accuracy per unit of computing time: Crank–Nicolson reaches $8 \times 10^{-6}$ in 0.1 s. The interest of the benchmark is methodological (treatment of the nonlocal condition, multiplier $\lambda(t)$, behaviour across $\alpha^{\ast}$), not performance.

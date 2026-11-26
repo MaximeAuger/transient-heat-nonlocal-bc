@@ -12,11 +12,11 @@ This repository is the transient counterpart of [steady-state-heat-conduction](h
 
 ## Problem Statement
 
-$$u_t - \bigl(k(u)\,u_x\bigr)_x = f(x,t), \qquad x \in (0,1),\ t \in (0,T], \qquad k(u) = 1 + \beta\,u^2$$
+$$u_t - \bigl(k(u)\thinspace u_x\bigr)_x = f(x,t), \qquad x \in (0,1),\ t \in (0,T], \qquad k(u) = 1 + \beta\thinspace u^2$$
 
 | Condition | Expression |
 |---|---|
-| Nonlocal (left) | $u(0,t) = \alpha \int_0^1 u(x,t)\,dx + g_0(t)$ |
+| Nonlocal (left) | $u(0,t) = \alpha \int_0^1 u(x,t)\thinspace dx + g_0(t)$ |
 | Dirichlet (right) | $u(1,t) = g_1(t)$ |
 | Initial | $u(x,0) = u_0(x)$ |
 
@@ -24,35 +24,35 @@ $\beta = 0$ is the linear case. Unless stated otherwise $T = 1$.
 
 ### Manufactured Solutions
 
-Both extend the profile of the steady-state benchmark, $\varphi(x) = \sin(\pi x) + (1-x)\,\tfrac{4}{\pi}$, for which $\varphi(0) = \int_0^1 \varphi\,dx = \tfrac{4}{\pi}$:
+Both extend the profile of the steady-state benchmark, $\varphi(x) = \sin(\pi x) + (1-x)\thinspace \tfrac{4}{\pi}$, for which $\varphi(0) = \int_0^1 \varphi\thinspace dx = \tfrac{4}{\pi}$:
 
 | Name | Solution | Time dynamics |
 |---|---|---|
-| `decay` | $u = e^{-t}\,\varphi(x)$ | monotone |
-| `oscillating` | $u = \bigl(1 + t + \tfrac12 \sin 2\pi t\bigr)\,\varphi(x)$ | non-monotone |
+| `decay` | $u = e^{-t}\thinspace \varphi(x)$ | monotone |
+| `oscillating` | $u = \bigl(1 + t + \tfrac12 \sin 2\pi t\bigr)\thinspace \varphi(x)$ | non-monotone |
 
-The data $f$, $g_0$, $g_1$, $u_0$ are derived **symbolically with SymPy** for any $(\alpha, \beta)$ (`src/exact_solution.py`); with $\alpha = 1$ one gets $g_0 = g_1 = 0$, and in general $g_0(t) = u(0,t) - \alpha \int_0^1 u\,dx$. The residual of each manufactured solution is checked independently with PyTorch automatic differentiation (relative residual $\sim 10^{-16}$).
+The data $f$, $g_0$, $g_1$, $u_0$ are derived **symbolically with SymPy** for any $(\alpha, \beta)$ (`src/exact_solution.py`); with $\alpha = 1$ one gets $g_0 = g_1 = 0$, and in general $g_0(t) = u(0,t) - \alpha \int_0^1 u\thinspace dx$. The residual of each manufactured solution is checked independently with PyTorch automatic differentiation (relative residual $\sim 10^{-16}$).
 
-A **source-free problem** without closed-form solution ($f = 0$, $g_0 = g_1 = 0$, $u_0 = \sin \pi x + c\,(1-x)$ with $c$ fixed by compatibility) is used with the finite-difference reference.
+A **source-free problem** without closed-form solution ($f = 0$, $g_0 = g_1 = 0$, $u_0 = \sin \pi x + c\thinspace (1-x)$ with $c$ fixed by compatibility) is used with the finite-difference reference.
 
-### Critical Value of the Nonlocal Coefficient: $\alpha^* = 2$
+### Critical Value of the Nonlocal Coefficient: $\alpha^{\ast} = 2$
 
-For the homogeneous linear problem $u_t = u_{xx}$, $u(1,t) = 0$, $u(0,t) = \alpha \int_0^1 u\,dx$, separated solutions $e^{\sigma t}\phi(x)$ give (`src/critical_alpha.py`, derived with SymPy, not hard-coded):
+For the homogeneous linear problem $u_t = u_{xx}$, $u(1,t) = 0$, $u(0,t) = \alpha \int_0^1 u\thinspace dx$, separated solutions $e^{\sigma t}\phi(x)$ give (`src/critical_alpha.py`, derived with SymPy, not hard-coded):
 
 | Mode | $\phi(x)$ | Condition |
 |---|---|---|
 | $\sigma = 0$ | $1 - x$ | $\alpha = 2$ |
-| $\sigma = \kappa^2 > 0$ | $\sinh(\kappa(1-x))$ | $\alpha = \kappa \coth(\kappa/2)$ |
-| $\sigma = -\mu^2 < 0$ | $\sin(\mu(1-x))$ | $\mu = 2n\pi$ or $\mu \cot(\mu/2) = \alpha$ |
+| $\sigma = \kappa^2 \gt 0$ | $\sinh(\kappa(1-x))$ | $\alpha = \kappa \coth(\kappa/2)$ |
+| $\sigma = -\mu^2 \lt 0$ | $\sin(\mu(1-x))$ | $\mu = 2n\pi$ or $\mu \cot(\mu/2) = \alpha$ |
 
-Since $\kappa \coth(\kappa/2) = 2 + \kappa^2/6 - \dots$ is strictly increasing (its derivative is $(\sinh\kappa - \kappa)/(2\sinh^2(\kappa/2)) > 0$), **a growing mode exists if and only if $\alpha > 2$**, and it is unique. With $z = \mu/2$ the $\alpha$-dependent branch reads $z \cot z = \alpha/2$, the eigen-condition of the self-adjoint Robin problem $-\psi'' = z^2\psi$, $\psi(0) = 0$, $\psi'(1) = \tfrac{\alpha}{2}\psi(1)$: the spectrum is real.
+Since $\kappa \coth(\kappa/2) = 2 + \kappa^2/6 - \dots$ is strictly increasing (its derivative is $(\sinh\kappa - \kappa)/(2\sinh^2(\kappa/2)) \gt 0$), **a growing mode exists if and only if $\alpha \gt 2$**, and it is unique. With $z = \mu/2$ the $\alpha$-dependent branch reads $z \cot z = \alpha/2$, the eigen-condition of the self-adjoint Robin problem $-\psi'' = z^2\psi$, $\psi(0) = 0$, $\psi'(1) = \tfrac{\alpha}{2}\psi(1)$: the spectrum is real.
 
 Numerical verification (all in `tests/test_critical_alpha.py`):
 
-- the spectrum of the finite-difference operator is real, its leading eigenvalue matches the characteristic equation for every $\alpha$ tested and changes sign at $\alpha^* = 2.0000000$ (bisection, $|\alpha^* - 2| < 10^{-10}$);
+- the spectrum of the finite-difference operator is real, its leading eigenvalue matches the characteristic equation for every $\alpha$ tested and changes sign at $\alpha^{\ast} = 2.0000000$ (bisection, $|\alpha^{\ast} - 2| \lt 10^{-10}$);
 - Crank–Nicolson integration of the source-free problem reproduces the predicted rate $\sigma_1$: decay for $\alpha = 1$ ($\sigma_1 = -5.43$), growth for $\alpha = 2.5$ ($+3.15$) and $\alpha = 3$ ($+6.63$).
 
-For $\alpha > 2$ the problem remains well posed on a finite horizon, but perturbations are amplified by $e^{\sigma_1 T}$ ($\approx 23$ for $\alpha = 2.5$, $\approx 760$ for $\alpha = 3$). The analysis is for the linear problem; no claim is made for $\beta > 0$.
+For $\alpha \gt 2$ the problem remains well posed on a finite horizon, but perturbations are amplified by $e^{\sigma_1 T}$ ($\approx 23$ for $\alpha = 2.5$, $\approx 760$ for $\alpha = 3$). The analysis is for the linear problem; no claim is made for $\beta \gt 0$.
 
 ---
 
@@ -63,7 +63,7 @@ For $\alpha > 2$ the problem remains well posed on a finite horizon, but perturb
 | Ingredient | Choice |
 |---|---|
 | Network | MLP $(x,t) \to N_\theta$, 4 hidden layers × 32, tanh, Xavier init, `float64` |
-| Initial + Dirichlet conditions | imposed exactly: $u_\theta = u_0(x) + [g_1(t) - g_1(0)] + \tfrac{t}{T}(1-x)\,N_\theta(x,t)$ |
+| Initial + Dirichlet conditions | imposed exactly: $u_\theta = u_0(x) + [g_1(t) - g_1(0)] + \tfrac{t}{T}(1-x)\thinspace N_\theta(x,t)$ |
 | Points | the same tensor Gauss–Legendre grid, $32 \times 32$ in space-time |
 | Nonlocal condition | penalty at the Gauss–Legendre time nodes, integral by the Gauss–Legendre rule in space: $r_I(t_b) = u_\theta(0,t_b) - \alpha \sum_a w_a u_\theta(x_a,t_b) - g_0(t_b)$ |
 | Optimiser | Adam (4000 iterations, lr $10^{-3}$) then L-BFGS (4000 loss evaluations, strong Wolfe) |
@@ -75,30 +75,30 @@ The two solvers call the same code for the grid, the nonlocal penalty, the optim
 
 The residual is evaluated at the grid points by automatic differentiation on the flux, as in the steady-state code:
 
-$$r = \partial_t u_\theta - \partial_x\bigl(k(u_\theta)\,\partial_x u_\theta\bigr) - f, \qquad \mathcal{L}_{\text{PINN}} = \overline{r^2} + 100\;\overline{r_I^2}$$
+$$r = \partial_t u_\theta - \partial_x\bigl(k(u_\theta)\thinspace \partial_x u_\theta\bigr) - f, \qquad \mathcal{L}_{\text{PINN}} = \overline{r^2} + 100\ \overline{r_I^2}$$
 
 ### VPINN — Weak Formulation in Space, Strong in Time
 
-Multiplying by a product test function $v_i(x)\,w_j(t)$ and integrating by parts **in $x$ only** ($v_i(1) = 0$):
+Multiplying by a product test function $v_i(x)\thinspace w_j(t)$ and integrating by parts **in $x$ only** ($v_i(1) = 0$):
 
-$$R_{ij} = \int_0^T\!\!\int_0^1 \bigl(\partial_t u_\theta\, v_i + k(u_\theta)\,\partial_x u_\theta\, v_i'\bigr)\, w_j \,dx\,dt \;-\; v_i(0) \int_0^T \lambda(t)\, w_j(t)\,dt \;-\; \int_0^T\!\!\int_0^1 f\, v_i\, w_j \,dx\,dt$$
+$$R_{ij} = \int_0^T\!\!\int_0^1 \bigl(\partial_t u_\theta\thinspace  v_i + k(u_\theta)\thinspace \partial_x u_\theta\thinspace  v_i'\bigr)\thinspace  w_j \thinspace dx\thinspace dt \ -\  v_i(0) \int_0^T \lambda(t)\thinspace  w_j(t)\thinspace dt \ -\  \int_0^T\!\!\int_0^1 f\thinspace  v_i\thinspace  w_j \thinspace dx\thinspace dt$$
 
 - **Test functions:** $v_i(x) = P_i(2x-1) - 1$ (Legendre, $i = 1..K_x$) and $w_j(t) = P_j(2t/T - 1)$ (Legendre, $j = 0..K_t - 1$); default $K_x \times K_t = 12 \times 8$.
-- **Boundary flux as a Lagrange multiplier, now a function of time:** $\lambda(t) = -k(u)\,u_x(0,t) = \sum_m c_m P_m(2t/T - 1)$ with trainable $c_m$ ($K_t$ modes).
+- **Boundary flux as a Lagrange multiplier, now a function of time:** $\lambda(t) = -k(u)\thinspace u_x(0,t) = \sum_m c_m P_m(2t/T - 1)$ with trainable $c_m$ ($K_t$ modes).
 - Only first derivatives of the network are needed.
 
-$$\mathcal{L}_{\text{VPINN}} = 1000\;\overline{R_{ij}^2} + 100\;\overline{r_I^2}$$
+$$\mathcal{L}_{\text{VPINN}} = 1000\ \overline{R_{ij}^2} + 100\ \overline{r_I^2}$$
 
 Two deviations from the steady-state code, both stated here because they matter:
 
 1. the test functions are normalised ($v_i / \lVert v_i' \rVert_{L^2}$, $w_j / \lVert w_j \rVert_{L^2}$), so that every weak residual has a comparable scale;
 2. the weight of the weak residual is large (1000). Weak residuals are dual-norm quantities, numerically much smaller than strong residuals; with a weight of 1 the VPINN error was $6 \times 10^{-3}$ instead of $3 \times 10^{-5}$.
 
-**Tuning protocol.** One scan of the loss-weight ratio per method on the linear case (seed 0, budget 3000 + 3000): $w_I \in \{1, 10, 100, 1000\}$ for the PINN, $w_w \in \{1, 10^2, 10^3, 10^4, 10^5\}$ and three normalisations for the VPINN. The selected weights were then frozen for every experiment.
+**Tuning protocol.** One scan of the loss-weight ratio per method on the linear case (seed 0, budget 3000 + 3000): $w_I \in \lbrace 1, 10, 100, 1000\rbrace $ for the PINN, $w_w \in \lbrace 1, 10^2, 10^3, 10^4, 10^5\rbrace $ and three normalisations for the VPINN. The selected weights were then frozen for every experiment.
 
 ### Finite-Difference Reference
 
-Crank–Nicolson in time, centred differences in space with $k_{i+1/2} = k\bigl(\tfrac{u_i + u_{i+1}}{2}\bigr)$, the nonlocal row assembled with the trapezoidal rule, Newton iterations for $\beta > 0$ (`src/fd_reference.py`). Second-order convergence is verified in `tests/test_fd_reference.py`. It is the reference for the source-free problem ($1600 \times 1600$ grid) and a control everywhere else ($200 \times 200$ grid in the tables).
+Crank–Nicolson in time, centred differences in space with $k_{i+1/2} = k\bigl(\tfrac{u_i + u_{i+1}}{2}\bigr)$, the nonlocal row assembled with the trapezoidal rule, Newton iterations for $\beta \gt 0$ (`src/fd_reference.py`). Second-order convergence is verified in `tests/test_fd_reference.py`. It is the reference for the source-free problem ($1600 \times 1600$ grid) and a control everywhere else ($200 \times 200$ grid in the tables).
 
 ---
 
@@ -156,7 +156,7 @@ All numbers below are produced by `python src/run_all.py` and copied from [`resu
 | 3 | 2.57e-05 ± 6.6e-06 | 2.70e-05 ± 1.5e-06 | PINN ×1.0 (within ±1 std) | 4.83e-05 ± 7.3e-06 | 5.12e-05 ± 9.4e-06 | 1.15e-05 |
 | 5 | 2.71e-05 ± 1.5e-05 | 4.50e-05 ± 1.3e-05 | PINN ×1.7 (within ±1 std) | 3.75e-05 ± 1.8e-05 | 7.51e-05 ± 2.4e-05 | 1.25e-05 |
 
-**The crossover observed in the 2D steady-state study ($\beta^* \approx 2.7$) is not reproduced.** In this transient 1D setting both methods stay between $2 \times 10^{-5}$ and $5 \times 10^{-5}$ for every $\beta \in [0, 5]$, and the mean ± std intervals overlap everywhere except at $\beta = 2$ (VPINN ×1.4). The ordering of the means (VPINN ahead at $\beta = 2$, PINN ahead at $\beta = 5$) points in the same direction as the 2D result, but with 3 seeds it is not statistically established. Neither method degrades with $\beta$, unlike the 2D steady case.
+**The crossover observed in the 2D steady-state study ($\beta^{\ast} \approx 2.7$) is not reproduced.** In this transient 1D setting both methods stay between $2 \times 10^{-5}$ and $5 \times 10^{-5}$ for every $\beta \in [0, 5]$, and the mean ± std intervals overlap everywhere except at $\beta = 2$ (VPINN ×1.4). The ordering of the means (VPINN ahead at $\beta = 2$, PINN ahead at $\beta = 5$) points in the same direction as the 2D result, but with 3 seeds it is not statistically established. Neither method degrades with $\beta$, unlike the 2D steady case.
 
 <p align="center">
   <img src="results/fig3_error_vs_beta.png" width="95%" alt="Error vs beta">
@@ -174,9 +174,9 @@ All numbers below are produced by `python src/run_all.py` and copied from [`resu
 | 2.5 | +3.154 | 23.4 | 7.30e-04 ± 8.5e-04 | 2.11e-04 ± 8.9e-05 | VPINN ×3.5 (within ±1 std) | 1.44e-04 |
 | 3 | +6.634 | 761 | 4.87e-04 ± 2.2e-04 | 3.35e-04 ± 8.3e-05 | VPINN ×1.5 (within ±1 std) | 3.99e-03 |
 
-- **No degradation when approaching $\alpha^* = 2$ from below:** the error at $\alpha = 1.99$ is the same as at $\alpha = 1.5$. A neutral mode is not an unstable one, and the horizon is finite.
-- **Above $\alpha^*$ the error jumps by one order of magnitude** for both methods, and the PINN becomes erratic (std larger than the mean at $\alpha = 2.5$). The VPINN has the lower mean, within one std.
-- The nonlocal condition itself stays satisfied to $4 \times 10^{-5}$–$10^{-4}$ on both sides of $\alpha^*$ (see `results/tables.md`): the constraint is met, the error is not small.
+- **No degradation when approaching $\alpha^{\ast} = 2$ from below:** the error at $\alpha = 1.99$ is the same as at $\alpha = 1.5$. A neutral mode is not an unstable one, and the horizon is finite.
+- **Above $\alpha^{\ast}$ the error jumps by one order of magnitude** for both methods, and the PINN becomes erratic (std larger than the mean at $\alpha = 2.5$). The VPINN has the lower mean, within one std.
+- The nonlocal condition itself stays satisfied to $4 \times 10^{-5}$–$10^{-4}$ on both sides of $\alpha^{\ast}$ (see `results/tables.md`): the constraint is met, the error is not small.
 - At $\alpha = 3$ the time-marching scheme on a $200 \times 200$ grid is 10× *less* accurate than the networks (its truncation error is amplified by $e^{\sigma_1 T} \approx 760$). It remains second-order convergent, so a finer grid restores its advantage at a cost of seconds.
 
 **Source-free problem, error against the finite-difference reference (1600 × 1600)**
@@ -265,7 +265,7 @@ A residual-based loss does not see the growing mode: a residual of relative size
 
 ### E5 — Extension: Nonlocal Initial Condition (exploratory)
 
-The local initial condition is replaced by a nonlocal one of Sapagovas type, $u(x,0) = \gamma\,u(x,T) + \phi(x)$, **in addition to** the nonlocal boundary condition ($\alpha = 1$, $\beta = 0$, `decay` solution, $\phi$ derived from the manufactured solution). For $\gamma \neq 1$ this condition can also be imposed exactly: writing $u_\theta = A(x) + B_\theta(x,t)$ with $B_\theta = \tfrac{t}{T}(1-x)N_\theta$, the condition gives $A(x) = \bigl[\phi(x) + \gamma\,B_\theta(x,T)\bigr]/(1-\gamma)$, at the price of one extra network evaluation at $t = T$ (`src/network.py`).
+The local initial condition is replaced by a nonlocal one of Sapagovas type, $u(x,0) = \gamma\thinspace u(x,T) + \phi(x)$, **in addition to** the nonlocal boundary condition ($\alpha = 1$, $\beta = 0$, `decay` solution, $\phi$ derived from the manufactured solution). For $\gamma \neq 1$ this condition can also be imposed exactly: writing $u_\theta = A(x) + B_\theta(x,t)$ with $B_\theta = \tfrac{t}{T}(1-x)N_\theta$, the condition gives $A(x) = \bigl[\phi(x) + \gamma\thinspace B_\theta(x,T)\bigr]/(1-\gamma)$, at the price of one extra network evaluation at $t = T$ (`src/network.py`).
 
 | $\gamma$ | PINN L2 | VPINN L2 | Lower mean | PINN H1($T$) | VPINN H1($T$) | PINN flux (autograd) | VPINN flux $\lambda(t)$ |
 |---|---|---|---|---|---|---|---|
@@ -286,8 +286,8 @@ Both methods handle the two nonlocal conditions together at the accuracy of the 
 2. **Non-monotone time dynamics favour the PINN.** With the default time test space the VPINN is 25× worse; with enough time modes it is still 2–3× worse.
 3. **The time-dependent Lagrange multiplier works.** $\lambda(t)$ recovers the boundary flux to $10^{-4}$–$10^{-3}$ relative error, 2–4× better than differentiating the VPINN network, at no extra cost. It degrades when the time basis is too poor (3.6 % error on the source-free problem).
 4. **No crossover in $\beta$.** The VPINN/PINN crossover found near $\beta \approx 2.7$ in the 2D steady-state study does not appear in the transient 1D problem: the two methods are statistically indistinguishable for $\beta \in [0, 5]$, except for a modest VPINN advantage at $\beta = 2$.
-5. **$\alpha^* = 2$ is a sharp boundary for accuracy, but only from above.** Nothing happens when $\alpha \to 2^-$; for $\alpha > 2$ errors rise tenfold on the manufactured problem and, on the source-free problem, the VPINN fails at $\alpha = 2.5$ and both methods fail at $\alpha = 3$. Small residuals do not imply small errors in the growing-mode regime.
-6. **Neither network method is competitive with finite differences on this 1D problem** in accuracy per unit of computing time: Crank–Nicolson reaches $8 \times 10^{-6}$ in 0.1 s. The interest of the benchmark is methodological (treatment of the nonlocal condition, multiplier $\lambda(t)$, behaviour across $\alpha^*$), not performance.
+5. **$\alpha^{\ast} = 2$ is a sharp boundary for accuracy, but only from above.** Nothing happens when $\alpha \to 2^-$; for $\alpha \gt 2$ errors rise tenfold on the manufactured problem and, on the source-free problem, the VPINN fails at $\alpha = 2.5$ and both methods fail at $\alpha = 3$. Small residuals do not imply small errors in the growing-mode regime.
+6. **Neither network method is competitive with finite differences on this 1D problem** in accuracy per unit of computing time: Crank–Nicolson reaches $8 \times 10^{-6}$ in 0.1 s. The interest of the benchmark is methodological (treatment of the nonlocal condition, multiplier $\lambda(t)$, behaviour across $\alpha^{\ast}$), not performance.
 
 ### Limitations
 
@@ -296,7 +296,7 @@ Both methods handle the two nonlocal conditions together at the accuracy of the 
 - Loss weights were tuned once, on the linear case with one seed, and the VPINN is sensitive to them.
 - One spatial dimension, $T \le 5$, two manufactured solutions and one source-free family.
 - E5 is exploratory: one manufactured solution, three values of $\gamma$, no independent reference.
-- The stability analysis ($\alpha^* = 2$) is linear; the interplay with $\beta > 0$ was not studied.
+- The stability analysis ($\alpha^{\ast} = 2$) is linear; the interplay with $\beta \gt 0$ was not studied.
 
 ---
 
@@ -348,7 +348,7 @@ python run_all.py --only E1,E2 --workers 4
 python -m pytest tests -q
 ```
 
-94 tests (about 1 min): residual of the manufactured solutions (autograd and symbolic), Gauss–Legendre exactness, test functions, vanishing of both discrete losses at the exact solution (including the sign convention of $\lambda(t)$ in the weak form), second-order convergence of the Crank–Nicolson reference, derivation and numerical verification of $\alpha^* = 2$, exactness of the hard constraints, and short end-to-end trainings.
+94 tests (about 1 min): residual of the manufactured solutions (autograd and symbolic), Gauss–Legendre exactness, test functions, vanishing of both discrete losses at the exact solution (including the sign convention of $\lambda(t)$ in the weak form), second-order convergence of the Crank–Nicolson reference, derivation and numerical verification of $\alpha^{\ast} = 2$, exactness of the hard constraints, and short end-to-end trainings.
 
 ### Custom Configuration
 

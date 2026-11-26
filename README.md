@@ -94,7 +94,7 @@ Two deviations from the steady-state code, both stated here because they matter:
 1. the test functions are normalised ($v_i / \lVert v_i' \rVert_{L^2}$, $w_j / \lVert w_j \rVert_{L^2}$), so that every weak residual has a comparable scale;
 2. the weight of the weak residual is large (1000). Weak residuals are dual-norm quantities, numerically much smaller than strong residuals; with a weight of 1 the VPINN error was $6 \times 10^{-3}$ instead of $3 \times 10^{-5}$.
 
-**Tuning protocol.** One scan of the loss-weight ratio per method on the linear case (seed 0, budget 3000 + 3000): $w_I \in \lbrace 1, 10, 100, 1000\rbrace $ for the PINN, $w_w \in \lbrace 1, 10^2, 10^3, 10^4, 10^5\rbrace $ and three normalisations for the VPINN. The selected weights were then frozen for every experiment.
+**Tuning protocol.** One scan of the loss-weight ratio per method on the linear case (seed 0, budget 3000 + 3000): $w_I \in \lbrace 1, 10, 100, 1000\rbrace$ for the PINN, $w_w \in \lbrace 1, 10^2, 10^3, 10^4, 10^5\rbrace$ and three normalisations for the VPINN. The selected weights were then frozen for every experiment.
 
 ### Finite-Difference Reference
 
